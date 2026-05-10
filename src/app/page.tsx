@@ -26,7 +26,7 @@ export default function HomePage() {
         alignItems: "center",
         minHeight: "100vh",
       }}
-    >
+    >  
       <CircularProgress />
     </Box>
   );
