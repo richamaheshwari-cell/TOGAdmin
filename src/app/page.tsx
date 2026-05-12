@@ -8,7 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function HomePage() {
   const router = useRouter();
   const { accessToken, isInitialized } = useAuth();
-
   useEffect(() => {
     if (!isInitialized) return;
     if (accessToken) {
@@ -26,7 +25,7 @@ export default function HomePage() {
         alignItems: "center",
         minHeight: "100vh",
       }}
-    >  
+    >
       <CircularProgress />
     </Box>
   );
