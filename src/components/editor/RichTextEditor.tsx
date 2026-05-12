@@ -42,7 +42,12 @@ import UndoIcon from "@mui/icons-material/Undo";
 import RedoIcon from "@mui/icons-material/Redo";
 import FormatParagraphIcon from "@mui/icons-material/FormatAlignLeft";
 import TitleIcon from "@mui/icons-material/Title";
-import { useEditor, EditorContent, type Content, type Editor } from "@tiptap/react";
+import {
+  useEditor,
+  EditorContent,
+  type Content,
+  type Editor,
+} from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextStyle from "@tiptap/extension-text-style";
@@ -106,7 +111,10 @@ const HIGHLIGHT_COLORS = [
   "#efefef",
 ];
 
-function getInitialContent(value: string, output: RichTextEditorOutput): Content {
+function getInitialContent(
+  value: string,
+  output: RichTextEditorOutput,
+): Content {
   if (!value || value.trim() === "") {
     return output === "html" ? emptyHtml : emptyDoc;
   }
@@ -121,12 +129,12 @@ function getInitialContent(value: string, output: RichTextEditorOutput): Content
 }
 
 /** Heading levels available in the editor (no H1 — page title is the H1). */
-const HEADING_LEVELS = [2, 3, 4, 5, 6, 7, 8] as const;
+const HEADING_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
 /** Apply block format only to the current block (Word-like: one paragraph/heading at a time). */
 function applyBlockFormatToCurrentBlock(
   editor: Editor,
-  format: "paragraph" | (typeof HEADING_LEVELS)[number]
+  format: "paragraph" | (typeof HEADING_LEVELS)[number],
 ): void {
   const { state } = editor;
   const { $from } = state.selection;
@@ -142,7 +150,11 @@ function applyBlockFormatToCurrentBlock(
         // @tiptap Level type is 1–6; extension runtime supports 7–8 (renders <h7>, <h8>).
         chain.toggleHeading({ level: format as never }).run();
       }
-      editor.chain().focus().setTextSelection(to - 1).run();
+      editor
+        .chain()
+        .focus()
+        .setTextSelection(to - 1)
+        .run();
       return;
     }
   }
@@ -174,14 +186,22 @@ export function RichTextEditor({
   const outputRef = useRef(output);
   outputRef.current = output;
 
-  const [blockFormatAnchor, setBlockFormatAnchor] = useState<null | HTMLElement>(null);
+  const [blockFormatAnchor, setBlockFormatAnchor] =
+    useState<null | HTMLElement>(null);
   const [colorAnchor, setColorAnchor] = useState<null | HTMLElement>(null);
-  const [highlightAnchor, setHighlightAnchor] = useState<null | HTMLElement>(null);
+  const [highlightAnchor, setHighlightAnchor] = useState<null | HTMLElement>(
+    null,
+  );
   const [imageUploading, setImageUploading] = useState(false);
-  const [imageMenuAnchor, setImageMenuAnchor] = useState<null | HTMLElement>(null);
+  const [imageMenuAnchor, setImageMenuAnchor] = useState<null | HTMLElement>(
+    null,
+  );
   const imageInputRef = useRef<HTMLInputElement>(null);
   /** After upload: show alt dialog once; on confirm/cancel insert and clear. */
-  const [pendingImageInsert, setPendingImageInsert] = useState<{ url: string; pos?: number } | null>(null);
+  const [pendingImageInsert, setPendingImageInsert] = useState<{
+    url: string;
+    pos?: number;
+  } | null>(null);
   const [pendingImageAlt, setPendingImageAlt] = useState("");
   /** From URL dialog */
   const [imageUrlDialogOpen, setImageUrlDialogOpen] = useState(false);
@@ -205,7 +225,9 @@ export function RichTextEditor({
       ImageWithMenu.configure({
         inline: false,
         allowBase64: true,
-        HTMLAttributes: { style: "max-width: 100%; height: auto; border-radius: 4px;" },
+        HTMLAttributes: {
+          style: "max-width: 100%; height: auto; border-radius: 4px;",
+        },
       }),
       Placeholder.configure({ placeholder }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
@@ -236,7 +258,8 @@ export function RichTextEditor({
             const file = item.getAsFile();
             if (file && editor) {
               setImageUploading(true);
-              api.uploadImage(file)
+              api
+                .uploadImage(file)
                 .then((url) => {
                   setPendingImageInsert({ url });
                   setPendingImageAlt("");
@@ -257,8 +280,11 @@ export function RichTextEditor({
         if (!file) return false;
         event.preventDefault();
         setImageUploading(true);
-        const pos = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos ?? editor.state.selection.from;
-        api.uploadImage(file)
+        const pos =
+          view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos ??
+          editor.state.selection.from;
+        api
+          .uploadImage(file)
           .then((url) => {
             setPendingImageInsert({ url, pos });
             setPendingImageAlt("");
@@ -272,8 +298,10 @@ export function RichTextEditor({
 
   useEffect(() => {
     if (!editor) return;
-    const current = output === "html" ? editor.getHTML() : JSON.stringify(editor.getJSON());
-    const next = value || (output === "html" ? emptyHtml : JSON.stringify(emptyDoc));
+    const current =
+      output === "html" ? editor.getHTML() : JSON.stringify(editor.getJSON());
+    const next =
+      value || (output === "html" ? emptyHtml : JSON.stringify(emptyDoc));
     if (current !== next) {
       editor.commands.setContent(getInitialContent(value, output), false);
     }
@@ -299,14 +327,21 @@ export function RichTextEditor({
       const { url, pos } = pendingImageInsert;
       const altVal = alt?.trim() || undefined;
       if (typeof pos === "number") {
-        editor.chain().focus().insertContentAt(pos, { type: "image", attrs: { src: url, alt: altVal } }).run();
+        editor
+          .chain()
+          .focus()
+          .insertContentAt(pos, {
+            type: "image",
+            attrs: { src: url, alt: altVal },
+          })
+          .run();
       } else {
         editor.chain().focus().setImage({ src: url, alt: altVal }).run();
       }
       setPendingImageInsert(null);
       setPendingImageAlt("");
     },
-    [editor, pendingImageInsert]
+    [editor, pendingImageInsert],
   );
 
   const onImageFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -334,16 +369,35 @@ export function RichTextEditor({
       editor?.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
-    editor?.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+    editor
+      ?.chain()
+      .focus()
+      .extendMarkRange("link")
+      .setLink({ href: url })
+      .run();
   };
 
   const insertTable = () => {
-    editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    editor
+      ?.chain()
+      .focus()
+      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+      .run();
   };
 
   if (!editor) {
     return (
-      <Paper variant="outlined" sx={{ p: 2, minHeight, display: "flex", alignItems: "center", justifyContent: "center", color: "text.secondary" }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          minHeight,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "text.secondary",
+        }}
+      >
         Loading editor…
       </Paper>
     );
@@ -371,14 +425,24 @@ export function RichTextEditor({
         {/* Undo / Redo */}
         <Tooltip title="Undo">
           <span>
-            <IconButton size="small" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} aria-label="Undo">
+            <IconButton
+              size="small"
+              onClick={() => editor.chain().focus().undo().run()}
+              disabled={!editor.can().undo()}
+              aria-label="Undo"
+            >
               <UndoIcon fontSize="small" />
             </IconButton>
           </span>
         </Tooltip>
         <Tooltip title="Redo">
           <span>
-            <IconButton size="small" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} aria-label="Redo">
+            <IconButton
+              size="small"
+              onClick={() => editor.chain().focus().redo().run()}
+              disabled={!editor.can().redo()}
+              aria-label="Redo"
+            >
               <RedoIcon fontSize="small" />
             </IconButton>
           </span>
@@ -390,11 +454,17 @@ export function RichTextEditor({
           size="small"
           value="block"
           onClick={(e) => setBlockFormatAnchor(e.currentTarget)}
-          sx={{ minWidth: 112, justifyContent: "space-between", textTransform: "none" }}
+          sx={{
+            minWidth: 112,
+            justifyContent: "space-between",
+            textTransform: "none",
+          }}
           aria-label="Block format"
         >
           {blockLabel}
-          <Box component="span" sx={{ ml: 0.5, fontSize: "0.75rem" }}>▼</Box>
+          <Box component="span" sx={{ ml: 0.5, fontSize: "0.75rem" }}>
+            ▼
+          </Box>
         </ToggleButton>
         <Menu
           anchorEl={blockFormatAnchor}
@@ -409,7 +479,9 @@ export function RichTextEditor({
               setBlockFormatAnchor(null);
             }}
           >
-            <ListItemIcon><FormatParagraphIcon fontSize="small" /></ListItemIcon>
+            <ListItemIcon>
+              <FormatParagraphIcon fontSize="small" />
+            </ListItemIcon>
             <ListItemText>Paragraph</ListItemText>
           </MenuItem>
           {HEADING_LEVELS.map((level) => (
@@ -420,7 +492,9 @@ export function RichTextEditor({
                 setBlockFormatAnchor(null);
               }}
             >
-              <ListItemIcon><TitleIcon fontSize="small" /></ListItemIcon>
+              <ListItemIcon>
+                <TitleIcon fontSize="small" />
+              </ListItemIcon>
               <ListItemText>{`Heading ${level}`}</ListItemText>
             </MenuItem>
           ))}
@@ -428,30 +502,79 @@ export function RichTextEditor({
         <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
 
         {/* Text formatting */}
-        <ToggleButtonGroup size="small" sx={{ "& .MuiToggleButton-root": { px: 0.75 } }}>
-          <ToggleButton value="bold" selected={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} aria-label="Bold">
-            <Tooltip title="Bold"><FormatBoldIcon fontSize="small" /></Tooltip>
+        <ToggleButtonGroup
+          size="small"
+          sx={{ "& .MuiToggleButton-root": { px: 0.75 } }}
+        >
+          <ToggleButton
+            value="bold"
+            selected={editor.isActive("bold")}
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            aria-label="Bold"
+          >
+            <Tooltip title="Bold">
+              <FormatBoldIcon fontSize="small" />
+            </Tooltip>
           </ToggleButton>
-          <ToggleButton value="italic" selected={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} aria-label="Italic">
-            <Tooltip title="Italic"><FormatItalicIcon fontSize="small" /></Tooltip>
+          <ToggleButton
+            value="italic"
+            selected={editor.isActive("italic")}
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            aria-label="Italic"
+          >
+            <Tooltip title="Italic">
+              <FormatItalicIcon fontSize="small" />
+            </Tooltip>
           </ToggleButton>
-          <ToggleButton value="underline" selected={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()} aria-label="Underline">
-            <Tooltip title="Underline"><FormatUnderlinedIcon fontSize="small" /></Tooltip>
+          <ToggleButton
+            value="underline"
+            selected={editor.isActive("underline")}
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            aria-label="Underline"
+          >
+            <Tooltip title="Underline">
+              <FormatUnderlinedIcon fontSize="small" />
+            </Tooltip>
           </ToggleButton>
-          <ToggleButton value="strike" selected={editor.isActive("strike")} onClick={() => editor.chain().focus().toggleStrike().run()} aria-label="Strikethrough">
-            <Tooltip title="Strikethrough"><StrikethroughSIcon fontSize="small" /></Tooltip>
+          <ToggleButton
+            value="strike"
+            selected={editor.isActive("strike")}
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+            aria-label="Strikethrough"
+          >
+            <Tooltip title="Strikethrough">
+              <StrikethroughSIcon fontSize="small" />
+            </Tooltip>
           </ToggleButton>
         </ToggleButtonGroup>
         <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
 
         {/* Text color */}
         <Tooltip title="Text color">
-          <IconButton size="small" onClick={(e) => setColorAnchor(e.currentTarget)} aria-label="Text color">
+          <IconButton
+            size="small"
+            onClick={(e) => setColorAnchor(e.currentTarget)}
+            aria-label="Text color"
+          >
             <FormatColorTextIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Menu anchorEl={colorAnchor} open={!!colorAnchor} onClose={() => setColorAnchor(null)} anchorOrigin={{ vertical: "bottom", horizontal: "left" }} transformOrigin={{ vertical: "top", horizontal: "left" }}>
-          <Box sx={{ p: 1, display: "flex", flexWrap: "wrap", gap: 0.5, width: 200 }}>
+        <Menu
+          anchorEl={colorAnchor}
+          open={!!colorAnchor}
+          onClose={() => setColorAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+        >
+          <Box
+            sx={{
+              p: 1,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 0.5,
+              width: 200,
+            }}
+          >
             {TEXT_COLORS.map((c) => (
               <Box
                 key={c}
@@ -459,7 +582,16 @@ export function RichTextEditor({
                   editor.chain().focus().setColor(c).run();
                   setColorAnchor(null);
                 }}
-                sx={{ width: 20, height: 20, bgcolor: c, border: "1px solid", borderColor: "divider", borderRadius: 0.5, cursor: "pointer", "&:hover": { opacity: 0.9 } }}
+                sx={{
+                  width: 20,
+                  height: 20,
+                  bgcolor: c,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 0.5,
+                  cursor: "pointer",
+                  "&:hover": { opacity: 0.9 },
+                }}
                 aria-label={`Color ${c}`}
               />
             ))}
@@ -468,12 +600,30 @@ export function RichTextEditor({
 
         {/* Highlight */}
         <Tooltip title="Highlight">
-          <IconButton size="small" onClick={(e) => setHighlightAnchor(e.currentTarget)} aria-label="Highlight">
+          <IconButton
+            size="small"
+            onClick={(e) => setHighlightAnchor(e.currentTarget)}
+            aria-label="Highlight"
+          >
             <HighlightIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Menu anchorEl={highlightAnchor} open={!!highlightAnchor} onClose={() => setHighlightAnchor(null)} anchorOrigin={{ vertical: "bottom", horizontal: "left" }} transformOrigin={{ vertical: "top", horizontal: "left" }}>
-          <Box sx={{ p: 1, display: "flex", flexWrap: "wrap", gap: 0.5, width: 180 }}>
+        <Menu
+          anchorEl={highlightAnchor}
+          open={!!highlightAnchor}
+          onClose={() => setHighlightAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+        >
+          <Box
+            sx={{
+              p: 1,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 0.5,
+              width: 180,
+            }}
+          >
             {HIGHLIGHT_COLORS.map((c) => (
               <Box
                 key={c}
@@ -481,7 +631,16 @@ export function RichTextEditor({
                   editor.chain().focus().toggleHighlight({ color: c }).run();
                   setHighlightAnchor(null);
                 }}
-                sx={{ width: 24, height: 24, bgcolor: c, border: "1px solid", borderColor: "divider", borderRadius: 0.5, cursor: "pointer", "&:hover": { opacity: 0.9 } }}
+                sx={{
+                  width: 24,
+                  height: 24,
+                  bgcolor: c,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 0.5,
+                  cursor: "pointer",
+                  "&:hover": { opacity: 0.9 },
+                }}
                 aria-label={`Highlight ${c}`}
               />
             ))}
@@ -491,7 +650,12 @@ export function RichTextEditor({
 
         {/* Link & Image */}
         <Tooltip title="Insert link">
-          <IconButton size="small" onClick={setLink} aria-label="Insert link" color={editor.isActive("link") ? "primary" : "inherit"}>
+          <IconButton
+            size="small"
+            onClick={setLink}
+            aria-label="Insert link"
+            color={editor.isActive("link") ? "primary" : "inherit"}
+          >
             <LinkIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -523,8 +687,12 @@ export function RichTextEditor({
             }}
             disabled={imageUploading}
           >
-            <ListItemIcon><CloudUploadIcon fontSize="small" /></ListItemIcon>
-            <ListItemText primary={imageUploading ? "Uploading…" : "Upload image"} />
+            <ListItemIcon>
+              <CloudUploadIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText
+              primary={imageUploading ? "Uploading…" : "Upload image"}
+            />
           </MenuItem>
           <MenuItem
             onClick={() => {
@@ -532,7 +700,9 @@ export function RichTextEditor({
               insertImageFromUrl();
             }}
           >
-            <ListItemIcon><LinkIcon fontSize="small" /></ListItemIcon>
+            <ListItemIcon>
+              <LinkIcon fontSize="small" />
+            </ListItemIcon>
             <ListItemText primary="From URL" />
           </MenuItem>
         </Menu>
@@ -544,42 +714,108 @@ export function RichTextEditor({
           onChange={onImageFileSelect}
         />
         <Tooltip title="Insert table">
-          <IconButton size="small" onClick={insertTable} aria-label="Insert table">
+          <IconButton
+            size="small"
+            onClick={insertTable}
+            aria-label="Insert table"
+          >
             <TableChartIcon fontSize="small" />
           </IconButton>
         </Tooltip>
         <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
 
         {/* Alignment */}
-        <ToggleButtonGroup size="small" sx={{ "& .MuiToggleButton-root": { px: 0.5 } }}>
-          <ToggleButton value="left" selected={editor.isActive({ textAlign: "left" })} onClick={() => editor.chain().focus().setTextAlign("left").run()} aria-label="Align left">
-            <Tooltip title="Align left"><FormatAlignLeftIcon fontSize="small" /></Tooltip>
+        <ToggleButtonGroup
+          size="small"
+          sx={{ "& .MuiToggleButton-root": { px: 0.5 } }}
+        >
+          <ToggleButton
+            value="left"
+            selected={editor.isActive({ textAlign: "left" })}
+            onClick={() => editor.chain().focus().setTextAlign("left").run()}
+            aria-label="Align left"
+          >
+            <Tooltip title="Align left">
+              <FormatAlignLeftIcon fontSize="small" />
+            </Tooltip>
           </ToggleButton>
-          <ToggleButton value="center" selected={editor.isActive({ textAlign: "center" })} onClick={() => editor.chain().focus().setTextAlign("center").run()} aria-label="Align center">
-            <Tooltip title="Align center"><FormatAlignCenterIcon fontSize="small" /></Tooltip>
+          <ToggleButton
+            value="center"
+            selected={editor.isActive({ textAlign: "center" })}
+            onClick={() => editor.chain().focus().setTextAlign("center").run()}
+            aria-label="Align center"
+          >
+            <Tooltip title="Align center">
+              <FormatAlignCenterIcon fontSize="small" />
+            </Tooltip>
           </ToggleButton>
-          <ToggleButton value="right" selected={editor.isActive({ textAlign: "right" })} onClick={() => editor.chain().focus().setTextAlign("right").run()} aria-label="Align right">
-            <Tooltip title="Align right"><FormatAlignRightIcon fontSize="small" /></Tooltip>
+          <ToggleButton
+            value="right"
+            selected={editor.isActive({ textAlign: "right" })}
+            onClick={() => editor.chain().focus().setTextAlign("right").run()}
+            aria-label="Align right"
+          >
+            <Tooltip title="Align right">
+              <FormatAlignRightIcon fontSize="small" />
+            </Tooltip>
           </ToggleButton>
-          <ToggleButton value="justify" selected={editor.isActive({ textAlign: "justify" })} onClick={() => editor.chain().focus().setTextAlign("justify").run()} aria-label="Justify">
-            <Tooltip title="Justify"><FormatAlignJustifyIcon fontSize="small" /></Tooltip>
+          <ToggleButton
+            value="justify"
+            selected={editor.isActive({ textAlign: "justify" })}
+            onClick={() => editor.chain().focus().setTextAlign("justify").run()}
+            aria-label="Justify"
+          >
+            <Tooltip title="Justify">
+              <FormatAlignJustifyIcon fontSize="small" />
+            </Tooltip>
           </ToggleButton>
         </ToggleButtonGroup>
         <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
 
         {/* Lists & block */}
-        <ToggleButtonGroup size="small" sx={{ "& .MuiToggleButton-root": { px: 0.5 } }}>
-          <ToggleButton value="bullet" selected={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()} aria-label="Bullet list">
-            <Tooltip title="Bullet list"><FormatListBulletedIcon fontSize="small" /></Tooltip>
+        <ToggleButtonGroup
+          size="small"
+          sx={{ "& .MuiToggleButton-root": { px: 0.5 } }}
+        >
+          <ToggleButton
+            value="bullet"
+            selected={editor.isActive("bulletList")}
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            aria-label="Bullet list"
+          >
+            <Tooltip title="Bullet list">
+              <FormatListBulletedIcon fontSize="small" />
+            </Tooltip>
           </ToggleButton>
-          <ToggleButton value="ordered" selected={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()} aria-label="Numbered list">
-            <Tooltip title="Numbered list"><FormatListNumberedIcon fontSize="small" /></Tooltip>
+          <ToggleButton
+            value="ordered"
+            selected={editor.isActive("orderedList")}
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            aria-label="Numbered list"
+          >
+            <Tooltip title="Numbered list">
+              <FormatListNumberedIcon fontSize="small" />
+            </Tooltip>
           </ToggleButton>
-          <ToggleButton value="blockquote" selected={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()} aria-label="Quote">
-            <Tooltip title="Quote"><FormatQuoteIcon fontSize="small" /></Tooltip>
+          <ToggleButton
+            value="blockquote"
+            selected={editor.isActive("blockquote")}
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            aria-label="Quote"
+          >
+            <Tooltip title="Quote">
+              <FormatQuoteIcon fontSize="small" />
+            </Tooltip>
           </ToggleButton>
-          <ToggleButton value="hr" selected={false} onClick={() => editor.chain().focus().setHorizontalRule().run()} aria-label="Horizontal rule">
-            <Tooltip title="Horizontal rule"><HorizontalRuleIcon fontSize="small" /></Tooltip>
+          <ToggleButton
+            value="hr"
+            selected={false}
+            onClick={() => editor.chain().focus().setHorizontalRule().run()}
+            aria-label="Horizontal rule"
+          >
+            <Tooltip title="Horizontal rule">
+              <HorizontalRuleIcon fontSize="small" />
+            </Tooltip>
           </ToggleButton>
         </ToggleButtonGroup>
       </Box>
@@ -650,7 +886,12 @@ export function RichTextEditor({
               margin: "0.8em 0 0.3em 0",
               "&:first-of-type": { marginTop: 0 },
             },
-            "& img": { maxWidth: "100%", height: "auto", borderRadius: 1, display: "block" },
+            "& img": {
+              maxWidth: "100%",
+              height: "auto",
+              borderRadius: 1,
+              display: "block",
+            },
             "& blockquote": {
               borderLeft: "4px solid",
               borderColor: "divider",
@@ -660,9 +901,19 @@ export function RichTextEditor({
               color: "text.secondary",
               marginLeft: 0,
             },
-            "& ul, & ol": { pl: 2.5, my: "0.75em", "& li": { marginBottom: "0.25em" } },
+            "& ul, & ol": {
+              pl: 2.5,
+              my: "0.75em",
+              "& li": { marginBottom: "0.25em" },
+            },
             "& table": { borderCollapse: "collapse", width: "100%", my: 2 },
-            "& th, & td": { border: "1px solid", borderColor: "divider", px: 1.5, py: 1, textAlign: "left" },
+            "& th, & td": {
+              border: "1px solid",
+              borderColor: "divider",
+              px: 1.5,
+              py: 1,
+              textAlign: "left",
+            },
             "& th": { bgcolor: "action.hover", fontWeight: 600 },
           },
           "& .tiptap p.is-editor-empty:first-child::before": {
@@ -704,12 +955,22 @@ export function RichTextEditor({
         </DialogContent>
         <DialogActions>
           <Button onClick={() => commitPendingImageInsert("")}>Skip</Button>
-          <Button variant="contained" onClick={() => commitPendingImageInsert(pendingImageAlt)}>OK</Button>
+          <Button
+            variant="contained"
+            onClick={() => commitPendingImageInsert(pendingImageAlt)}
+          >
+            OK
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* From URL dialog */}
-      <Dialog open={imageUrlDialogOpen} onClose={() => setImageUrlDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={imageUrlDialogOpen}
+        onClose={() => setImageUrlDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Insert image from URL</DialogTitle>
         <DialogContent>
           <TextField
@@ -736,7 +997,14 @@ export function RichTextEditor({
             onClick={() => {
               const url = imageUrlValue.trim();
               if (url && editor) {
-                editor.chain().focus().setImage({ src: url, alt: imageUrlAltValue.trim() || undefined }).run();
+                editor
+                  .chain()
+                  .focus()
+                  .setImage({
+                    src: url,
+                    alt: imageUrlAltValue.trim() || undefined,
+                  })
+                  .run();
                 setImageUrlDialogOpen(false);
               }
             }}
