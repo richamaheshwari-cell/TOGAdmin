@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "TheOceanGames Admin",
+  title: "TheOceanGames Administrator",
   description: "Admin panel for TheOceanGames",
 };
 
