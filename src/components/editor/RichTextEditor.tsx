@@ -212,6 +212,7 @@ export function RichTextEditor({
     extensions: [
       StarterKit.configure({
         /** No H1 in body — title fields are H1; content uses paragraph + H2–H8. */
+        //adding comment to test
         heading: { levels: [...HEADING_LEVELS] as never },
       }),
       Underline,
